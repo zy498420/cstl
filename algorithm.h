@@ -6,10 +6,10 @@
 #define FOR_EACH(first, last, iterate, type, functor)  \
 do \
 { \
-    type* TMP_VARIABLE(_0) = (first); \
-    while(TMP_VARIABLE(_0) != (last) ) \
+    void* TMP_VARIABLE(_0) = (first); \
+    while(TMP_VARIABLE(_0) != (void*)(last) ) \
     { \
-        functor(ITERATOR_DEREF(iterate)(TMP_VARIABLE(_0), type)); \
+        functor(ITERATOR_VALUE_REF(iterate)(TMP_VARIABLE(_0), type)); \
         TMP_VARIABLE(_0) = (ITERATOR_NEXT(iterate)(TMP_VARIABLE(_0), type)); \
     } \
 } while(0) 
@@ -18,7 +18,7 @@ do \
 do \
 { \
     result = (first); \
-    while(result != (last) && (ITERATOR_DEREF(iterate)(result, type)) != (value)) \
+    while(result != (last) && (ITERATOR_VALUE_REF(iterate)(result, type)) != (value)) \
     { \
         result = (ITERATOR_NEXT(iterate)(result, type)); \
     }\
@@ -28,7 +28,7 @@ do \
 do \
 { \
     result = (first); \
-    while(result != (last) && (!(predicate(ITERATOR_DEREF(iterate)(result, type))))) \
+    while(result != (last) && (!(predicate(ITERATOR_VALUE_REF(iterate)(result, type))))) \
     { \
         result = (ITERATOR_NEXT(iterate)(result, type)); \
     }\

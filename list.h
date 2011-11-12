@@ -13,10 +13,10 @@ typedef struct clist_node_t
 }*LIST_NODE;
 
 #define LIST_NODE_DESTROY(node) \
-( \
+(void) ( \
     free(node->data), \
     free(node), \
-    (node) \
+    node = NULL \
 )
 
 #define LIST_NODE_CREATE(node, value, type) \
@@ -28,22 +28,21 @@ typedef struct clist_node_t
     (node) \
 )
 
-
 typedef struct clist_t
 {
     LIST_NODE begin;
     LIST_NODE rbegin;
     size_t size;
-    const char* type;
+    const char* element_type;
 }*LIST;
  
-#define LIST_ITERATOR LIST_ITERATOR
+typedef void *LIST_ITERATOR;   
 
-#define LIST_ITERATOR_NEXT(x, type) ((x)->next)
+#define LIST_ITERATOR_NEXT(x, type) (((LIST_NODE)(x))->next)
 
-#define LIST_ITERATOR_LAST(x, type) ((x)->last)
+#define LIST_ITERATOR_LAST(x, type) (((LIST_NODE)(x))->last)
 
-#define LIST_ITERATOR_DEREF(x, type) (*((type*)((x)->value)))
+#define LIST_ITERATOR_VALUE_REF(x, type) (*((type*)(((LIST_NODE)(x))->data)))
 
 #define LIST_ELEMENT_TYPE(l) \
 ( \
@@ -57,7 +56,7 @@ typedef struct clist_t
 
 #define LIST_END(l) \
 ( \
-    (LIST_NODE)(NULL) \
+    NULL \
 )
 
 #define LIST_FRONT(l, type) \
@@ -96,18 +95,19 @@ do \
     while(tmp1 != NULL) \
     { \
         tmp2 = tmp1->next; \
-        (LIST_NODE_DESTROY(tmp1)) = tmp2; \
+        LIST_NODE_DESTROY(tmp1); \
+        tmp1 = tmp2; \
     } \
     free(l); \
     l = NULL; \
-)while(0)
+}while(0)
 
 #define LIST_PUSH_BACK(l, value, type) \
 ( \
     ( \
         ((l)->begin == NULL) ? \
-            (l)->begin = (LIST_NODE_CREATE((l)->rbegin, (value), type)) : \
-            (LIST_NODE_CREATE((l)->rbegin->next, (value), type))->last = (l)->rbegin, (l)->rbegin= (l)->rbegin->next \
+            ((l)->begin = (LIST_NODE_CREATE((l)->rbegin, (value), type))) : \
+            (((LIST_NODE_CREATE((l)->rbegin->next, (value), type))->last = (l)->rbegin), ((l)->rbegin = (l)->rbegin->next)) \
     ), \
     ++((l)->size), \
     (l)->rbegin \
@@ -117,8 +117,8 @@ do \
 ( \
     ( \
         ((l)->begin == NULL) ? \
-            (l)->begin = (LIST_NODE_CREATE((l)->rbegin, (value), type)) : \
-            (LIST_NODE_CREATE((l)->begin->last, (value), type))->next = (l)->begin, (l)->begin= (l)->begin->last \
+            ((l)->begin = (LIST_NODE_CREATE((l)->rbegin, (value), type))) : \
+            (((LIST_NODE_CREATE((l)->begin->last, (value), type))->next = (l)->begin), ((l)->begin = (l)->begin->last)) \
     ), \
     ++((l)->size), \
     (l)->begin \
@@ -128,8 +128,8 @@ do \
 (void) ( \
     ( \
         ((l)->begin == (l)->rbegin) ? \
-            LIST_NODE_DESTROY((l)->begin), (l)->begin = (l)->rbegin = NULL : \
-            (l)->rbegin = (l)->rbegin->last, (LIST_NODE_DESTROY((l)->rbegin->next)) = NULL \
+            (void)((LIST_NODE_DESTROY((l)->begin)), ((l)->rbegin = NULL)) : \
+            (((l)->rbegin = (l)->rbegin->last), (LIST_NODE_DESTROY((l)->rbegin->next))) \
     ), \
     --((l)->size) \
 )
@@ -138,8 +138,8 @@ do \
 (void) ( \
     ( \
         ((l)->begin == (l)->rbegin) ? \
-            LIST_NODE_DESTROY((l)->begin), (l)->begin = (l)->rbegin = NULL : \
-            (l)->begin = (l)->begin->next, (LIST_NODE_DESTROY((l)->begin->last)) = NULL \
+            ((LIST_NODE_DESTROY((l)->begin)), ((l)->rbegin = NULL)) : \
+            (((l)->begin = (l)->begin->next), (LIST_NODE_DESTROY((l)->begin->last)))  \
     ), \
     --((l)->size) \
 )
@@ -152,10 +152,11 @@ do \
     while(tmp1 != NULL) \
     { \
         tmp2 = tmp1->next; \
-        (LIST_NODE_DESTROY(tmp1)) = tmp2; \
+        (LIST_NODE_DESTROY(tmp1)); \
+        tmp1 = tmp2; \
     } \
     (l)->begin = (l)->rbegin = NULL; \
     (l)->size = 0u; \
-)while(0)
+}while(0)
 
 #endif

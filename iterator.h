@@ -9,6 +9,6 @@
 
 #define ITERATOR_LAST(x) JOIN(x, _LAST) 
 
-#define ITERATOR_DEREF(x) JOIN(x, _DEREF) 
+#define ITERATOR_VALUE_REF(x) JOIN(x, _VALUE_REF) 
 
 #endif

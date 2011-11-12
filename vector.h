@@ -8,9 +8,10 @@
 
 typedef struct cvector_t
 {
-    void  *data;
+    void  *begin;
     size_t size;
     size_t capacity;
+    size_t element_size;
     const char* element_type;
 }*VECTOR;
 
@@ -24,7 +25,7 @@ typedef struct cvector_t
 
 #define VECTOR_AT_POINTER(v, n, type) \
 ( \
-    (type*)((v)->data) + n \
+    (type*)((v)->begin) + n \
 )
 
 #define VECTOR_AT_POINTER_SAFE(v, n, type) \
@@ -39,14 +40,14 @@ typedef struct cvector_t
     *(VECTOR_AT_POINTER((v), (n), type)) \
 )
 
-#define VECTOR_BEGIN(v, type) \
+#define VECTOR_BEGIN(v) \
 ( \
-    VECTOR_AT_POINTER((v), (0u), type) \
+    (v)->begin \
 )
 
-#define VECTOR_END(v, type) \
+#define VECTOR_END(v) \
 ( \
-    VECTOR_AT_POINTER((v), ((v)->size), type) \
+    (void*)(((char*)((v)->begin)) + (v)->size * (v)->element_size) \
 )
 
 #define VECTOR_FRONT(v, type) \
@@ -84,15 +85,16 @@ typedef struct cvector_t
 #define VECTOR_INIT(v, type) \
 (void) ( \
     (v) = (VECTOR)(malloc(sizeof(*v))), \
-    (v)->data = malloc(VECTOR_MINIMUM_CAPCITY * sizeof(type)), \
+    (v)->begin = malloc(VECTOR_MINIMUM_CAPCITY * sizeof(type)), \
     (v)->size = 0u, \
     (v)->capacity = VECTOR_MINIMUM_CAPCITY, \
+    (v)->element_size = sizeof(type), \
     (v)->element_type = TO_STRING(type) \
 )
 
 #define VECTOR_DESTROY(v) \
 (void) ( \
-    free((v)->data), \
+    free((v)->begin), \
     free(v), \
     v = NULL \
 )
@@ -101,8 +103,8 @@ typedef struct cvector_t
 ( \
     ( \
         (v)->size != (v)->capacity ? \
-            *(VECTOR_END((v), type)) = e : \
-            ((v)->data = realloc((v)->data, ((v)->capacity <<= 1u) * sizeof(type)), *(VECTOR_END((v), type)) = e) \
+            (*(VECTOR_END((v), type)) = e) : \
+            ((v)->begin = realloc((v)->begin, ((v)->capacity <<= 1u) * sizeof(type)), *(VECTOR_END((v), type)) = e) \
     ), \
     ++((v)->size), \
     VECTOR_BACK(v, type) \
@@ -125,7 +127,7 @@ do \
     { \
         (v)->capacity <<= 1u; \
     } \
-    (v)->data = realloc((v)->data, (v)->capacity * sizeof(type)); \
+    (v)->begin = realloc((v)->begin, (v)->capacity * sizeof(type)); \
 } while (0)
 
 #define VECTOR_RESIZE(v, n, type) \

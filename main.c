@@ -22,11 +22,11 @@ void vector_array_test(void)
     {
 #define FILL(x) x = b++
 
-    FOR_EACH(VECTOR_BEGIN(v, int), VECTOR_END(v, int), VECTOR_ITERATOR, int, FILL);
-    FOR_EACH(VECTOR_BEGIN(v, int), VECTOR_END(v, int), VECTOR_ITERATOR, int, OUT);
+    FOR_EACH(VECTOR_BEGIN(v), VECTOR_END(v), VECTOR_ITERATOR, int, FILL);
+    FOR_EACH(VECTOR_BEGIN(v), VECTOR_END(v), VECTOR_ITERATOR, int, OUT);
 
-    FOR_EACH(ARRAY_BEGIN(a, int), ARRAY_END(a, int), ARRAY_ITERATOR, int, FILL);
-    FOR_EACH(ARRAY_BEGIN(a, int), ARRAY_END(a, int), ARRAY_ITERATOR, int, OUT);
+    FOR_EACH(ARRAY_BEGIN(a), ARRAY_END(a), ARRAY_ITERATOR, int, FILL);
+    FOR_EACH(ARRAY_BEGIN(a), ARRAY_END(a), ARRAY_ITERATOR, int, OUT);
 
 
     FOR_EACH(aa, aa + 5, ARRAY_ITERATOR, int, FILL);
@@ -54,13 +54,21 @@ void vector_array_test(void)
 
 void list_test(void)
 {
+    LIST l;
+    LIST_INIT(l, int);
+    LIST_PUSH_BACK(l, 0, int);
+    LIST_PUSH_FRONT(l, 1, int);
+    FOR_EACH(LIST_BEGIN(l), LIST_END(l), LIST_ITERATOR, int, OUT);
+    LIST_POP_BACK(l);
+    LIST_CLEAR(l);
+    LIST_DESTROY(l);
 
 }
 
 int main()
 {
     vector_array_test();
-
+    list_test();
 
     return 0;
 }

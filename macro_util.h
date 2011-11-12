@@ -3,6 +3,6 @@
 
 #define TO_STRING(x) (#x)
 #define JOIN(x, y) x##y
-#define TMP_VARIABLE(x) JOIN(imafoolsodonotinterruptme, x)
+#define TMP_VARIABLE(x) JOIN(imafoolsodonotinterruptmeplz, x)
 
 #endif

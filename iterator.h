@@ -11,4 +11,14 @@
 
 #define ITERATOR_VALUE_REF(x) JOIN(x, _VALUE_REF) 
 
+typedef void *ARRAY_ITERATOR;   
+
+#define ARRAY_ITERATOR_NEXT(x, type) ((type*)(x) + 1)
+
+#define ARRAY_ITERATOR_LAST(x, type) ((type*)(x) - 1)
+
+#define ARRAY_ITERATOR_NEXT_N(x, n, type) ((type*)(x) + n)
+
+#define ARRAY_ITERATOR_VALUE_REF(x, type) (*((type*)(x)))
+
 #endif

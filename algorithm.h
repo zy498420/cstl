@@ -3,36 +3,58 @@
 
 #include "iterator.h"
 
-#define FOR_EACH(first, last, iterate, type, functor)  \
+#define FOR_EACH(input_iterator_first, input_iterator_last, input_iterator_type, input_value_type, functor)  \
 do \
 { \
-    void* TMP_VARIABLE(_0) = (first); \
-    while(TMP_VARIABLE(_0) != (void*)(last) ) \
+    input_iterator_type TMP_VARIABLE(i) = input_iterator_first; \
+    input_iterator_type const TMP_VARIABLE(e) = input_iterator_last; \
+\
+    while(TMP_VARIABLE(i) != TMP_VARIABLE(e) ) \
     { \
-        functor(ITERATOR_VALUE_REF(iterate)(TMP_VARIABLE(_0), type)); \
-        TMP_VARIABLE(_0) = (ITERATOR_NEXT(iterate)(TMP_VARIABLE(_0), type)); \
+        functor(ITERATOR_VALUE_REF(input_iterator_type)(TMP_VARIABLE(i), input_value_type)); \
+        TMP_VARIABLE(i) = (ITERATOR_NEXT(input_iterator_type)(TMP_VARIABLE(i), input_value_type)); \
     } \
 } while(0) 
 
-#define FIND(first, last, iterate, type, value, result) \
+#define COPY(input_iterator_first, input_iterator_last, input_iterator_type, input_value_type, \
+    output_iterator_first, output_iterator_type, output_value_type) \
 do \
 { \
-    result = (first); \
-    while(result != (last) && (ITERATOR_VALUE_REF(iterate)(result, type)) != (value)) \
+    input_iterator_type  TMP_VARIABLE(i) = input_iterator_first; \
+    input_iterator_type const TMP_VARIABLE(e) = input_iterator_last; \
+    output_iterator_type TMP_VARIABLE(o) = output_iterator_first; \
+\
+    while(TMP_VARIABLE(i) != TMP_VARIABLE(e) ) \
     { \
-        result = (ITERATOR_NEXT(iterate)(result, type)); \
+        ITERATOR_VALUE_REF(output_iterator_type)(TMP_VARIABLE(o), output_value_type) = \
+            ITERATOR_VALUE_REF(input_iterator_type)(TMP_VARIABLE(i), input_value_type); \
+        TMP_VARIABLE(i) = (ITERATOR_NEXT(input_iterator_type)(TMP_VARIABLE(i), input_value_type)); \
+        TMP_VARIABLE(o) = (ITERATOR_NEXT(output_iterator_type)(TMP_VARIABLE(o), output_value_type)); \
+    } \
+} while(0) 
+
+#define FIND(input_iterator_first, input_iterator_last, input_iterator_type, input_value_type, value, result) \
+do \
+{ \
+    input_iterator_type const TMP_VARIABLE(e) = input_iterator_last; \
+    input_value_type const TMP_VARIABLE(v) = value; \
+    result = (input_iterator_first); \
+\
+    while(result != (TMP_VARIABLE(e)) && (ITERATOR_VALUE_REF(input_iterator_type)(result, input_value_type)) != TMP_VARIABLE(v)) \
+    { \
+        result = (ITERATOR_NEXT(input_iterator_type)(result, input_value_type)); \
     }\
 } while(0)
 
-#define FIND_IF(first, last, iterate, type, predicate, result) \
+#define FIND_IF(input_iterator_first, input_iterator_last, input_iterator_type, input_value_type, predicate, result) \
 do \
 { \
-    result = (first); \
-    while(result != (last) && (!(predicate(ITERATOR_VALUE_REF(iterate)(result, type))))) \
+    input_iterator_type const TMP_VARIABLE(e) = input_iterator_last; \
+    result = (input_iterator_first); \
+    while(result != (TMP_VARIABLE(e)) && (!(predicate(ITERATOR_VALUE_REF(input_iterator_type)(result, input_value_type))))) \
     { \
-        result = (ITERATOR_NEXT(iterate)(result, type)); \
+        result = (ITERATOR_NEXT(input_iterator_type)(result, input_value_type)); \
     }\
 } while(0)
-
 
 #endif

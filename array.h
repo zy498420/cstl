@@ -1,33 +1,26 @@
 #ifndef ARRAY_H_
 #define ARRAY_H_
 
+#include <stdlib.h>
+#include <stddef.h>
 #include "iterator.h"
-
-#define ARRAY_ITERATOR_NEXT(x, type) ((type*)(x) + 1u)
-
-#define ARRAY_ITERATOR_LAST(x, type) ((type*)(x) - 1u)
-
-#define ARRAY_ITERATOR_NEXT_N(x, n, type) ((type*)(x) + n)
-
-#define ARRAY_ITERATOR_VALUE_REF(x, type) (*((type*)(x)))
 
 typedef struct carray_t
 {
     void *begin;
     void *end;
+    size_t size;
     const char* element_type;
 }*ARRAY;
-
-typedef void *ARRAY_ITERATOR;   
 
 #define ARRAY_ELEMENT_TYPE(a) \
 ( \
     (a)->element_type \
 )
 
-#define ARRAY_SIZE(a, type) \
+#define ARRAY_SIZE(a) \
 ( \
-    (type*)((a)->end) -  (type*)((a)->begin) \
+    (a)->size \
 )
 #define ARRAY_AT_POINTER(a, n, type) \
 ( \
@@ -63,16 +56,15 @@ typedef void *ARRAY_ITERATOR;
 
 #define ARRAY_BACK(a, type) \
 ( \
-    *((type*)(ARRAY_END(a)) - 1u) \
+    ARRAY_AT((a), ((a)->size - 1u), type) \
 )
-
-
 
 #define ARRAY_INIT(a, n, type) \
 (void) ( \
     (a) = (ARRAY)(malloc(sizeof(*(a)))), \
     (a)->begin = malloc((n) * sizeof(type)), \
     (a)->end = ARRAY_AT_POINTER((a), (n), type), \
+    (a)->size = n, \
     (a)->element_type = TO_STRING(type) \
 )
 

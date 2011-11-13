@@ -2,6 +2,9 @@
 #define LIST_H_
 
 #include <stdlib.h>
+#include <stddef.h>
+#include <assert.h>
+
 #include "macro_util.h"
 #include "iterator.h"
 
@@ -28,6 +31,8 @@ typedef struct clist_node_t
     (node) \
 )
 
+typedef LIST_NODE LIST_ITERATOR;  
+
 typedef struct clist_t
 {
     LIST_NODE begin;
@@ -35,8 +40,6 @@ typedef struct clist_t
     size_t size;
     const char* element_type;
 }*LIST;
- 
-typedef void *LIST_ITERATOR;   
 
 #define LIST_ITERATOR_NEXT(x, type) (((LIST_NODE)(x))->next)
 
@@ -46,12 +49,17 @@ typedef void *LIST_ITERATOR;
 
 #define LIST_ELEMENT_TYPE(l) \
 ( \
-    (l)->element_type \
+    CONST_VALUE((l)->element_type, const char*) \
 )
 
 #define LIST_BEGIN(l) \
 ( \
-    (l)->begin \
+    CONST_VALUE((l)->begin, LIST_ITERATOR) \
+)
+
+#define LIST_RBEGIN(l) \
+( \
+    CONST_VALUE((l)->rbegin, LIST_ITERATOR) \
 )
 
 #define LIST_END(l) \
@@ -59,19 +67,24 @@ typedef void *LIST_ITERATOR;
     NULL \
 )
 
+#define LIST_REND(l) \
+( \
+    NULL \
+)
+
 #define LIST_FRONT(l, type) \
 ( \
-   LIST_ITERATOR_DEREF((l)->begin, type) \
+   *((type*)((l)->begin->data)) \
 )
 
 #define LIST_BACK(l, type) \
 ( \
-   LIST_ITERATOR_DEREF((l)->rbegin, type) \
+   *((type*)((l)->rbegin->data)) \
 )
 
 #define LIST_SIZE(l) \
 ( \
-    (l)->size \
+    CONST_VALUE((l)->size, size_t) \
 )
 
 #define LIST_EMPTY(l) \
@@ -90,72 +103,110 @@ typedef void *LIST_ITERATOR;
 #define LIST_DESTROY(l) \
 do \
 { \
-    LIST_NODE tmp1 = (l)->begin; \
-    LIST_NODE tmp2 = NULL; \
-    while(tmp1 != NULL) \
+    LIST_NODE TMP_VARIABLE(0) = (l)->begin, TMP_VARIABLE(1) = NULL; \
+    while(TMP_VARIABLE(0) != NULL) \
     { \
-        tmp2 = tmp1->next; \
-        LIST_NODE_DESTROY(tmp1); \
-        tmp1 = tmp2; \
+        TMP_VARIABLE(1) = TMP_VARIABLE(0)->next; \
+        LIST_NODE_DESTROY(TMP_VARIABLE(0)); \
+        TMP_VARIABLE(0) = TMP_VARIABLE(1); \
     } \
     free(l); \
     l = NULL; \
 }while(0)
 
 #define LIST_PUSH_BACK(l, value, type) \
-( \
-    ( \
-        ((l)->begin == NULL) ? \
-            ((l)->begin = (LIST_NODE_CREATE((l)->rbegin, (value), type))) : \
-            (((LIST_NODE_CREATE((l)->rbegin->next, (value), type))->last = (l)->rbegin), ((l)->rbegin = (l)->rbegin->next)) \
-    ), \
-    ++((l)->size), \
-    (l)->rbegin \
-)
+do{ \
+    type TMP_VARIABLE(v) = (value); \
+    ((l)->begin == NULL) ? \
+        ((l)->begin = (LIST_NODE_CREATE((l)->rbegin, TMP_VARIABLE(v), type))) : \
+        (((LIST_NODE_CREATE((l)->rbegin->next, TMP_VARIABLE(v), type))->last = (l)->rbegin), ((l)->rbegin = (l)->rbegin->next)); \
+    ++((l)->size); \
+}while(0)
 
 #define LIST_PUSH_FRONT(l, value, type) \
-( \
-    ( \
-        ((l)->begin == NULL) ? \
-            ((l)->begin = (LIST_NODE_CREATE((l)->rbegin, (value), type))) : \
-            (((LIST_NODE_CREATE((l)->begin->last, (value), type))->next = (l)->begin), ((l)->begin = (l)->begin->last)) \
-    ), \
-    ++((l)->size), \
-    (l)->begin \
-)
+do{ \
+    type TMP_VARIABLE(v) = (value); \
+    ((l)->begin == NULL) ? \
+        ((l)->begin = (LIST_NODE_CREATE((l)->rbegin, TMP_VARIABLE(v), type))) : \
+        (((LIST_NODE_CREATE((l)->begin->last, TMP_VARIABLE(v), type))->next = (l)->begin), ((l)->begin = (l)->begin->last)); \
+    ++((l)->size); \
+}while(0)
 
 #define LIST_POP_BACK(l) \
 (void) ( \
+    assert((l)->begin != NULL), \
     ( \
         ((l)->begin == (l)->rbegin) ? \
             (void)((LIST_NODE_DESTROY((l)->begin)), ((l)->rbegin = NULL)) : \
-            (((l)->rbegin = (l)->rbegin->last), (LIST_NODE_DESTROY((l)->rbegin->next))) \
+            (void)(((l)->rbegin = (l)->rbegin->last), (LIST_NODE_DESTROY((l)->rbegin->next))) \
     ), \
     --((l)->size) \
 )
 
 #define LIST_POP_FRONT(l) \
 (void) ( \
+    assert((l)->begin != NULL), \
     ( \
         ((l)->begin == (l)->rbegin) ? \
-            ((LIST_NODE_DESTROY((l)->begin)), ((l)->rbegin = NULL)) : \
-            (((l)->begin = (l)->begin->next), (LIST_NODE_DESTROY((l)->begin->last)))  \
+            (void)((LIST_NODE_DESTROY((l)->begin)), ((l)->rbegin = NULL)) : \
+            (void)(((l)->begin = (l)->begin->next), (LIST_NODE_DESTROY((l)->begin->last)))  \
     ), \
     --((l)->size) \
 )
 
+#define LIST_INSERT(l, iterator_insert, value, type) \
+do \
+{ \
+    LIST_ITERATOR TMP_VARIABLE(i) = ((LIST_ITERATOR)(iterator_insert)); \
+    LIST_ITERATOR TMP_VARIABLE(v) = NULL; \
+    (void)LIST_NODE_CREATE(TMP_VARIABLE(v), (value), type); \
+\
+    if (TMP_VARIABLE(i)->next != NULL) \
+    { \
+        TMP_VARIABLE(i)->next->last = TMP_VARIABLE(v); \
+    } \
+    else \
+    { \
+        (l)->rbegin = TMP_VARIABLE(v);\
+    } \
+    TMP_VARIABLE(v)->last = TMP_VARIABLE(i); \
+    TMP_VARIABLE(v)->next = TMP_VARIABLE(i)->next; \
+    TMP_VARIABLE(i)->next = TMP_VARIABLE(v); \
+} while (0)
+
+#define LIST_ERASE(l, iterator_erase) \
+do \
+{ \
+    LIST_ITERATOR TMP_VARIABLE(e)= (LIST_ITERATOR)(iterator_erase); \
+    if (TMP_VARIABLE(e)->next != NULL) \
+    { \
+        TMP_VARIABLE(e)->next->last = TMP_VARIABLE(e)->last; \
+    } \
+    else \
+    { \
+        (l)->rbegin = (l)->rbegin->last; \
+    } \
+    if (TMP_VARIABLE(e)->last != NULL) \
+    { \
+        TMP_VARIABLE(e)->last->next = TMP_VARIABLE(e)->next; \
+    } \
+    else \
+    { \
+        (l)->begin = (l)->begin->next; \
+    } \
+    LIST_NODE_DESTROY(TMP_VARIABLE(e)); \
+} while (0)
+
 #define LIST_CLEAR(l) \
 do \
 { \
-    LIST_NODE tmp1 = (l)->begin; \
-    LIST_NODE tmp2 = NULL; \
-    while(tmp1 != NULL) \
+    while((l)->begin != NULL) \
     { \
-        tmp2 = tmp1->next; \
-        (LIST_NODE_DESTROY(tmp1)); \
-        tmp1 = tmp2; \
+        LIST_NODE TMP_VARIABLE(1) = (l)->begin ->next; \
+        LIST_NODE_DESTROY((l)->begin); \
+        (l)->begin  = TMP_VARIABLE(1); \
     } \
-    (l)->begin = (l)->rbegin = NULL; \
+    (l)->rbegin = NULL; \
     (l)->size = 0u; \
 }while(0)
 

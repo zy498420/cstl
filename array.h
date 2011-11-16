@@ -27,13 +27,6 @@ typedef struct carray_t
     (type*)((a)->begin) + n \
 )
 
-#define ARRAY_AT_POINTER_SAFE(a, n, type) \
-( \
-    ((n) < ARRAY_SIZE((a), type)) \
-    ? (ARRAY_AT_POINTER((a), (n), type)) \
-    : (NULL) \
-)
-
 #define ARRAY_AT(a, n, type) \
 ( \
     *(ARRAY_AT_POINTER((a), (n), type)) \
@@ -47,6 +40,16 @@ typedef struct carray_t
 #define ARRAY_END(a) \
 ( \
     (a)->end \
+)
+
+#define ARRAY_RBEGIN(a, type) \
+( \
+    (type*)((a)->end) - 1 \
+)
+
+#define ARRAY_REND(a, type) \
+( \
+    (type*)((a)->begin) - 1 \
 )
 
 #define ARRAY_FRONT(a, type) \

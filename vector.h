@@ -9,158 +9,208 @@
 #include "cstl_config.h"
 #include "array.h"
 
-#define VECTOR_ITERATOR ARRAY_ITERATOR     
-
 typedef struct cvector_t
 {
-    VECTOR_ITERATOR begin;
+    void* begin;
+    void* end;
     size_t size;
     size_t capacity;
-    size_t element_size;
     const char* element_type;
 }*VECTOR;
 
+#define VECTOR_ITERATOR ARRAY_ITERATOR
+
+#define VECTOR_REVERSE_ITERATOR ARRAY_REVERSE_ITERATOR
+
+typedef VECTOR VECTOR_BACK_INSERT_ITERATOR;
+
+#define VECTOR_BACK_INSERT_ITERATOR_INCREMENT(x, type) ((void)(0))
+
+#define VECTOR_BACK_INSERT_ITERATOR_VALUE_SET(x, value, type) VECTOR_PUSH_BACK(x, value, type)
+
 #define VECTOR_MINIMUM_CAPCITY (16u)
 
-#define VECTOR_ELEMENT_TYPE(v) \
+#define VECTOR_ELEMENT_TYPE(_v) \
 ( \
-    CONST_VALUE((v)->element_type, const char*) \
+    ARRAY_ELEMENT_TYPE(_v) \
 )
 
-#define VECTOR_AT_POINTER(v, n, type) \
+#define VECTOR_AT_POINTER(_v, _n, _type) \
 ( \
-    (type*)((v)->begin) + n \
+    ARRAY_AT_POINTER(_v, _n, _type) \
 )
 
-#define VECTOR_AT_POINTER_SAFE(v, n, type) \
+#define VECTOR_AT(_v, _n, _type) \
 ( \
-    ((n) < (v)->size) \
-    ? (VECTOR_AT_POINTER((v), (n), type)) \
-    : (NULL) \
+    *(VECTOR_AT_POINTER((_v), (_n), _type)) \
 )
 
-#define VECTOR_AT(v, n, type) \
+#define VECTOR_BEGIN(_v) \
 ( \
-    *(VECTOR_AT_POINTER((v), (n), type)) \
+    ARRAY_BEGIN(_v) \
 )
 
-#define VECTOR_BEGIN(v) \
+#define VECTOR_END(_v) \
 ( \
-    CONST_VALUE((v)->begin, VECTOR_ITERATOR) \
+    ARRAY_END(_v) \
 )
 
-#define VECTOR_END(v) \
+#define VECTOR_RBEGIN(_v, type) \
 ( \
-    (VECTOR_ITERATOR)(((single_byte*)((v)->begin)) + (v)->size * (v)->element_size) \
+    ARRAY_RBEGIN(_v, type) \
 )
 
-#define VECTOR_FRONT(v, type) \
+#define VECTOR_REND(_v, type) \
 ( \
-    VECTOR_AT((v), (0u), type) \
+    ARRAY_REND(_v, type) \
 )
 
-#define VECTOR_BACK(v, type) \
+#define VECTOR_FRONT(_v, _type) \
 ( \
-    VECTOR_AT((v), ((v)->size - 1u), type) \
+    ARRAY_FRONT(_v, _type) \
 )
 
-#define VECTOR_SIZE(v) \
+#define VECTOR_BACK(_v, _type) \
 ( \
-    CONST_VALUE((v)->size, size_t) \
+    ARRAY_BACK(_v, _type) \
 )
 
-#define VECTOR_CAPACITY(v) \
+#define VECTOR_SIZE(_v) \
 ( \
-    CONST_VALUE((v)->capacity, size_t) \
+    ARRAY_SIZE(_v) \
 )
 
-#define VECTOR_EMPTY(v) \
+#define VECTOR_CAPACITY(_v) \
 ( \
-    (v)->size == 0u \
+    CONST_VALUE((_v)->capacity, size_t) \
 )
 
-#define VECTOR_RESERVE(v, n, type) \
+#define VECTOR_EMPTY(_v) \
+( \
+    (_v)->size == 0u \
+)
+
+#define VECTOR_RESERVE(_v, _n, _type) \
 do \
 { \
-    if (n > (v)->capacity) \
+    VECTOR const TMP_VARIABLE(v) = (_v); \
+    size_t const TMP_VARIABLE(n) = (_n); \
+\
+    while((TMP_VARIABLE(n)) > (TMP_VARIABLE(v)->capacity)) \
     { \
-        while(n > (v)->capacity) \
-        { \
-            (v)->capacity <<= 1u; \
-        } \
+        (TMP_VARIABLE(v))->capacity <<= 1u; \
     } \
-    else \
+    while(TMP_VARIABLE(n) < ((TMP_VARIABLE(v))->capacity >> 1u)) \
     { \
-        while(n < ((v)->capacity >> 1u)) \
-        { \
-            (v)->capacity >>= 1u; \
-        } \
+        (TMP_VARIABLE(v))->capacity >>= 1u; \
     } \
-    (v)->begin = realloc((v)->begin, (v)->capacity * sizeof(type)); \
+\
+    (TMP_VARIABLE(v))->begin = realloc((TMP_VARIABLE(v))->begin, (TMP_VARIABLE(v))->capacity * sizeof(_type)); \
+    TMP_VARIABLE(v)->end = VECTOR_AT_POINTER(TMP_VARIABLE(v), (TMP_VARIABLE(v))->size, _type); \
 } while (0)
 
-#define VECTOR_RESIZE(v, n, type) \
+#define VECTOR_RESIZE(_v, _n, _type) \
 do \
 { \
-    VECTOR_RESERVE(v, n, type); \
-    (v)->size = n; \
+    VECTOR const TMP_VARIABLE(v) = (_v); \
+    size_t const TMP_VARIABLE(n) = (_n); \
+    /*CALL VECTOR_RESERVE(TMP_VARIABLE(v), TMP_VARIABLE(n), _type);*/ \
+    while((TMP_VARIABLE(n)) > (TMP_VARIABLE(v)->capacity)) \
+    { \
+        (TMP_VARIABLE(v))->capacity <<= 1u; \
+    } \
+    while(TMP_VARIABLE(n) < ((TMP_VARIABLE(v))->capacity >> 1u)) \
+    { \
+        (TMP_VARIABLE(v))->capacity >>= 1u; \
+    } \
+\
+    (TMP_VARIABLE(v))->begin = realloc((TMP_VARIABLE(v))->begin, (TMP_VARIABLE(v))->capacity * sizeof(_type)); \
+    TMP_VARIABLE(v)->end = VECTOR_AT_POINTER(TMP_VARIABLE(v),TMP_VARIABLE(n), _type); \
+    TMP_VARIABLE(v)->size = TMP_VARIABLE(n); \
 } while (0)
 
-#define VECTOR_INIT(v, type) \
+#define VECTOR_INIT(_v, _type) \
 (void) ( \
-    (v) = (VECTOR)(malloc(sizeof(*v))), \
-    (v)->begin = malloc(VECTOR_MINIMUM_CAPCITY * sizeof(type)), \
-    (v)->size = 0u, \
-    (v)->capacity = VECTOR_MINIMUM_CAPCITY, \
-    (v)->element_size = sizeof(type), \
-    (v)->element_type = TO_STRING(type) \
+    (_v) = (VECTOR)(malloc(sizeof(*_v))), \
+    (_v)->begin = malloc(VECTOR_MINIMUM_CAPCITY * sizeof(_type)), \
+    (_v)->end = VECTOR_AT_POINTER((_v), (0u), _type), \
+    (_v)->size = 0u, \
+    (_v)->capacity = VECTOR_MINIMUM_CAPCITY, \
+    (_v)->element_type = TO_STRING(_type) \
 )
 
-#define VECTOR_DESTROY(v) \
+#define VECTOR_DESTROY(_v) \
 (void) ( \
-    free((v)->begin), \
-    free(v), \
-    v = NULL \
+    ARRAY_DESTROY(_v) \
 )
 
-#define VECTOR_PUSH_BACK(v, element, type) \
+#define VECTOR_PUSH_BACK(_v, _e, _type) \
 do \
 { \
-    type TMP_VARIABLE(e) = element; \
-    ((v)->size != (v)->capacity) ? \
-        (*(VECTOR_AT_POINTER((v), (v)->size, type)) = TMP_VARIABLE(e) ) : \
-        ((v)->begin = realloc((v)->begin, ((v)->capacity <<= 1u) * sizeof(type)), *(VECTOR_AT_POINTER((v), (v)->size, type)) = TMP_VARIABLE(e) ); \
-    ++((v)->size); \
+    VECTOR const TMP_VARIABLE(v) = (_v); \
+    _type const TMP_VARIABLE(e) = (_e); \
+    if(TMP_VARIABLE(v)->size == TMP_VARIABLE(v)->capacity) \
+    {\
+        TMP_VARIABLE(v)->begin = realloc(TMP_VARIABLE(v)->begin, (TMP_VARIABLE(v)->capacity <<= 1u) * sizeof(_type)); \
+    }\
+    *(VECTOR_AT_POINTER(TMP_VARIABLE(v), TMP_VARIABLE(v)->size, _type)) =  TMP_VARIABLE(e); \
+    TMP_VARIABLE(v)->end = VECTOR_AT_POINTER(TMP_VARIABLE(v), TMP_VARIABLE(v)->size, _type); \
+    ++(TMP_VARIABLE(v)->size); \
 }while(0)
 
-#define VECTOR_POP_BACK(v) \
+#define VECTOR_POP_BACK(_v) \
 (void) ( \
-    --((v)->size) \
+    --((_v)->size) \
 )
 
-#define VECTOR_FILL(v, value, type) \
+#define VECTOR_FILL(_v, _e, _type) \
 do \
 { \
-    type* TMP_VARIABLE(1) = VECTOR_AT_POINTER(v, 0u, type); \
-    while(TMP_VARIABLE(1) != VECTOR_AT_POINTER(v, (v)->size, type)) \
+    VECTOR const TMP_VARIABLE(v) = (_v); \
+    _type const TMP_VARIABLE(e) = (_e); \
+    _type* TMP_VARIABLE(0) = VECTOR_AT_POINTER(TMP_VARIABLE(v), 0u, _type); \
+    VECTOR_ITERATOR* const TMP_VARIABLE(1) = VECTOR_END(TMP_VARIABLE(v)); \
+    while(TMP_VARIABLE(0) != TMP_VARIABLE(1)) \
     { \
-       *TMP_VARIABLE(1) = value; \
-       ++TMP_VARIABLE(1); \
+       *TMP_VARIABLE(0) = TMP_VARIABLE(e); \
+       ++TMP_VARIABLE(0); \
     } \
 } while (0)
 
-#define VECTOR_ASSIGN(v, n, value, type) \
+#define VECTOR_ASSIGN(_v, _n, _e, _type) \
 do \
 { \
-    VECTOR_RESIZE(v, n, type); \
-    VECTOR_FILL(v, value, type); \
+    VECTOR const TMP_VARIABLE(v) = (_v); \
+    size_t const TMP_VARIABLE(n) = (_n); \
+    _type const TMP_VARIABLE(e) = (_e); \
+    /*CALL VECTOR_RESIZE(TMP_VARIABLE(v), TMP_VARIABLE(n), _type); */ \
+    while((TMP_VARIABLE(n)) > (TMP_VARIABLE(v)->capacity)) \
+    { \
+        (TMP_VARIABLE(v))->capacity <<= 1u; \
+    } \
+    while(TMP_VARIABLE(n) < ((TMP_VARIABLE(v))->capacity >> 1u)) \
+    { \
+        (TMP_VARIABLE(v))->capacity >>= 1u; \
+    } \
+\
+    (TMP_VARIABLE(v))->begin = realloc((TMP_VARIABLE(v))->begin, (TMP_VARIABLE(v))->capacity * sizeof(_type)); \
+    TMP_VARIABLE(v)->end = VECTOR_AT_POINTER(TMP_VARIABLE(v),TMP_VARIABLE(n), _type); \
+    TMP_VARIABLE(v)->size = TMP_VARIABLE(n); \
+    /*CALL VECTOR_FILL(TMP_VARIABLE(v), TMP_VARIABLE(e), _type);*/ \
+    do \
+    { \
+        _type *TMP_VARIABLE(0) = VECTOR_AT_POINTER(TMP_VARIABLE(v), 0u, _type); \
+        while(TMP_VARIABLE(0) != VECTOR_END(TMP_VARIABLE(v))) \
+        { \
+           *TMP_VARIABLE(0) = TMP_VARIABLE(e); \
+           ++TMP_VARIABLE(0); \
+        } \
+    } while (0); \
 } while (0)
 
-#define VECTOR_CLEAR(v) \
+#define VECTOR_CLEAR(_v) \
 (void) ( \
-    (v)->size = 0u \
+    (_v)->size = 0u \
 )
-
-
 
 #endif

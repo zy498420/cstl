@@ -16,6 +16,8 @@
 #endif
 #endif //_MSC_VER
 
+#define MAC_ARG(mac, index) TMP_VARIABLE(JOIN_1(mac, index))
+
 #define IF_ERROR(testnum) (((int)(testnum))/((int)(testnum)))
 #define STATIC_ASSERT(testnum) typedef char JOIN_1(error,__LINE__)[IF_ERROR(testnum)]
 
